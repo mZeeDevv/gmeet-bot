@@ -1,21 +1,53 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
+import logging
 
-# Load environment variables
-load_dotenv()
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
-CORS(app)
+try:
+    # Load environment variables
+    load_dotenv()
 
-@app.route('/')
-def home():
-    return jsonify({
-        "status": "online",
-        "service": "fastn-bot",
-        "version": "1.0.0"
-    })
+    app = Flask(__name__)
+    CORS(app)
+
+    # Favicon route
+    @app.route('/favicon.ico')
+    def favicon():
+        return '', 204  # No content response for favicon
+
+    @app.route('/')
+    def home():
+        logger.info("Home endpoint called")
+        return jsonify({
+            "status": "online",
+            "service": "fastn-bot",
+            "version": "1.0.0"
+        })
+
+    @app.errorhandler(500)
+    def server_error(e):
+        logger.error(f"Server error: {str(e)}")
+        return jsonify({
+            "error": "Internal server error",
+            "message": str(e)
+        }), 500
+
+    @app.errorhandler(404)
+    def not_found(e):
+        logger.error(f"Not found: {str(e)}")
+        return jsonify({
+            "error": "Not found",
+            "message": str(e)
+        }), 404
+
+except Exception as e:
+    logger.error(f"Error during app initialization: {str(e)}")
+    raise
 
 @app.route('/search', methods=['POST'])
 def search():

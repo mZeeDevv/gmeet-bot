@@ -8,12 +8,18 @@
     ],
     "routes": [
         {
+            "src": "/favicon.ico",
+            "dest": "app.py"
+        },
+        {
             "src": "/(.*)",
             "dest": "app.py"
         }
     ],
     "env": {
-        "PYTHON_VERSION": "3.9"
+        "PYTHON_VERSION": "3.9",
+        "FLASK_ENV": "production",
+        "FLASK_DEBUG": "0"
     },
     "functions": {
         "app.py": {
