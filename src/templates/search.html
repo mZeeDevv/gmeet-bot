@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FASTN Documentation Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 0 20px;
+            line-height: 1.6;
+        }
+        .search-container {
+            margin: 20px 0;
+        }
+        #query-input {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #loading {
+            display: none;
+            color: #666;
+            margin: 20px 0;
+        }
+        .answer-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        .answer-text {
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+        }
+        .sources {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+        .source-item {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .source-url {
+            color: #007bff;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        .source-url:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>FASTN Documentation Search</h1>
+    
+    <div class="search-container">
+        <input type="text" id="query-input" placeholder="Ask a question about FASTN...">
+        <button onclick="performSearch()">Search</button>
+    </div>
+
+    <div id="loading">Searching and generating answer...</div>
+
+    <div id="answer-container" class="answer-container">
+        <h2>Answer:</h2>
+        <div id="answer-text" class="answer-text"></div>
+        
+        <div class="sources">
+            <h3>Sources:</h3>
+            <div id="sources-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const queryInput = document.getElementById('query-input');
+        const loading = document.getElementById('loading');
+        const answerContainer = document.getElementById('answer-container');
+        const answerText = document.getElementById('answer-text');
+        const sourcesList = document.getElementById('sources-list');
+
+        queryInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+
+        async function performSearch() {
+            const query = queryInput.value.trim();
+            if (!query) return;
+
+            // Show loading, hide previous results
+            loading.style.display = 'block';
+            answerContainer.style.display = 'none';
+
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query }),
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Display the answer and sources
+                answerText.textContent = data.answer;
+
+                // Display sources if available
+                if (data.sources && data.sources.length > 0) {
+                    sourcesList.innerHTML = data.sources.map(source => `
+                        <div class="source-item">
+                            <a href="${source.url}" class="source-url" target="_blank">${source.url}</a>
+                            ${source.has_code ? '<span>[Contains Code Example]</span>' : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    sourcesList.innerHTML = '<p>No specific sources cited.</p>';
+                }
+
+                // Show the results
+                answerContainer.style.display = 'block';
+            } catch (error) {
+                answerText.textContent = `Error: ${error.message}`;
+                sourcesList.innerHTML = '';
+                answerContainer.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
