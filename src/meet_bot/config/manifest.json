@@ -1,0 +1,52 @@
+{
+  "name": "fastn-bot",
+  "version": "1.0.0",
+  "manifestVersion": 1,
+  "requirements": {
+    "meetApiVersion": "v1"
+  },
+  "description": "A documentation assistant bot for Google Meet that answers questions about fastn documentation in real-time",
+  "homepage": "https://github.com/mZeeDevv/gmeet-bot",
+  "appId": "gen-lang-client-0290969767",
+  "consentTitle": "fastn Documentation Assistant",
+  "consentText": "This add-on will help answer questions about fastn documentation during the meeting. It processes questions through a secure server and provides accurate, documentation-based responses.",
+  "endpoints": {
+    "webhook": "https://your-domain.com/webhook",
+    "configure": "https://your-domain.com/configure"
+  },
+  "defaultLocale": "en",
+  "permissions": [
+    "https://www.googleapis.com/auth/meetings.space.read",
+    "https://www.googleapis.com/auth/meetings.space.write",
+    "https://www.googleapis.com/auth/meetings.messages.read",
+    "https://www.googleapis.com/auth/meetings.messages.write",
+    "https://www.googleapis.com/auth/meetings.participants.read"
+  ],
+  "scopes": [
+    "profile",
+    "email"
+  ],
+  "meetFeatures": {
+    "notifications": {
+      "enabled": true,
+      "messagesEnabled": true,
+      "participantJoinEnabled": true,
+      "participantLeaveEnabled": true
+    },
+    "commands": [
+      {
+        "name": "help",
+        "description": "Show available commands and how to use the bot"
+      },
+      {
+        "name": "search",
+        "description": "Search fastn documentation"
+      }
+    ],
+    "chat": {
+      "enabled": true,
+      "startMessageEnabled": true,
+      "welcomeMessage": "👋 Hello! I'm fastn-bot, your documentation assistant. Ask me any question about fastn documentation, and I'll help you find the answer. Type !help for available commands."
+    }
+  }
+}
