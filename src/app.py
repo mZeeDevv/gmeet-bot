@@ -1,17 +1,21 @@
-from flask import Flask, render_template, request, jsonify
-import sys
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import os
-from pathlib import Path
+from dotenv import load_dotenv
 
-# Add the parent directory to the Python path to import search_docs
-sys.path.append(str(Path(__file__).parent.parent))
-from vector_store.search_docs import search_docs, generate_answer
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/')
-def index():
-    return render_template('search.html')
+def home():
+    return jsonify({
+        "status": "online",
+        "service": "fastn-bot",
+        "version": "1.0.0"
+    })
 
 @app.route('/search', methods=['POST'])
 def search():
