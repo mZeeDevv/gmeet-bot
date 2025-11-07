@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fastn.ai - Meet Bot Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            min-height: 100vh;
+            padding: 20px;
+            color: #e0e0e0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: #111111;
+            padding: 40px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333333;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            font-size: 2.2em;
+            margin-bottom: 8px;
+            font-weight: 300;
+            letter-spacing: -0.5px;
+        }
+
+        .header h1 .brand {
+            font-weight: 600;
+        }
+
+        .header p {
+            color: #888888;
+            font-size: 0.95em;
+            margin-top: 8px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            font-size: 0.75em;
+            font-weight: 600;
+            margin-top: 16px;
+            letter-spacing: 1px;
+            background: #1a1a1a;
+            border: 1px solid #333333;
+            color: #888888;
+        }
+
+        .status-running {
+            background: #0d1f0d;
+            color: #4ade80;
+            border-color: #22c55e;
+        }
+
+        .status-error {
+            background: #1f0d0d;
+            color: #f87171;
+            border-color: #dc2626;
+        }
+
+        .control-panel {
+            background: #111111;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid #222222;
+        }
+
+        .control-panel h2 {
+            color: #ffffff;
+            margin-bottom: 24px;
+            font-size: 1.1em;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #888888;
+            font-weight: 500;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid #333333;
+            font-size: 0.95em;
+            background: #0a0a0a;
+            color: #ffffff;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #666666;
+            background: #151515;
+        }
+
+        .btn {
+            padding: 14px 32px;
+            border: 1px solid #333333;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .btn-primary {
+            background: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #e0e0e0;
+            border-color: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: #ffffff;
+            border-color: #333333;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #1a1a1a;
+            border-color: #666666;
+        }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .logs-container {
+            background: #111111;
+            padding: 30px;
+            border: 1px solid #222222;
+        }
+
+        .logs-container h2 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .clear-logs {
+            font-size: 0.75em;
+            padding: 6px 14px;
+            background: transparent;
+            color: #888888;
+            cursor: pointer;
+            border: 1px solid #333333;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .clear-logs:hover {
+            background: #1a1a1a;
+            border-color: #666666;
+            color: #ffffff;
+        }
+
+        .logs-box {
+            background: #0a0a0a;
+            padding: 20px;
+            height: 500px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.8;
+            color: #e0e0e0;
+            border: 1px solid #1a1a1a;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+            padding: 4px 0;
+        }
+
+        .log-time {
+            color: #555555;
+            margin-right: 12px;
+        }
+
+        .log-success {
+            color: #4ade80;
+        }
+
+        .log-error {
+            color: #f87171;
+        }
+
+        .log-warning {
+            color: #fbbf24;
+        }
+
+        .log-info {
+            color: #e0e0e0;
+        }
+
+        .log-speaking {
+            color: #a78bfa;
+        }
+
+        .log-user {
+            color: #60a5fa;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #111111;
+            padding: 28px;
+            color: #ffffff;
+            border: 1px solid #222222;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: #333333;
+            background: #151515;
+        }
+
+        .stat-card h3 {
+            font-size: 2.5em;
+            margin-bottom: 8px;
+            font-weight: 300;
+            color: #ffffff;
+        }
+
+        .stat-card p {
+            font-size: 0.8em;
+            font-weight: 500;
+            color: #666666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .logs-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .logs-box::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        .logs-box::-webkit-scrollbar-thumb {
+            background: #333333;
+        }
+
+        .logs-box::-webkit-scrollbar-thumb:hover {
+            background: #444444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>AMA about <span class="brand">Fastn.ai</span></h1>
+            <p>Meeting Assistant Control Panel</p>
+            <span class="status-badge status-idle" id="statusBadge">IDLE</span>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3 id="messagesCount">0</h3>
+                <p>Messages Spoken</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="userMessages">0</h3>
+                <p>User Messages</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="uptime">00:00:00</h3>
+                <p>Session Uptime</p>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <h2>Control Panel</h2>
+            <div class="input-group">
+                <label for="meetLink">Google Meet Link</label>
+                <input 
+                    type="url" 
+                    id="meetLink" 
+                    placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                    value="https://meet.google.com/"
+                >
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <button class="btn btn-primary" id="startBtn" onclick="startBot()">
+                    Start Bot
+                </button>
+                <button class="btn btn-danger" id="stopBtn" onclick="stopBot()" disabled>
+                    Stop Bot
+                </button>
+            </div>
+        </div>
+
+        <!-- Logs -->
+        <div class="logs-container">
+            <h2>
+                Live Logs
+                <span class="clear-logs" onclick="clearLogs()">Clear</span>
+            </h2>
+            <div class="logs-box" id="logsBox">
+                <div class="log-entry log-info">
+                    <span class="log-time">[00:00:00]</span>
+                    <span>[INFO] Bot dashboard ready. Enter meeting link and click START.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let startTime = null;
+        let uptimeInterval = null;
+        let messagesCount = 0;
+        let userMessagesCount = 0;
+
+        function addLog(message, type = 'info') {
+            const logsBox = document.getElementById('logsBox');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            
+            const time = new Date().toLocaleTimeString();
+            
+            // Format message with prefix based on type
+            let prefix = '[INFO]';
+            if (type === 'success') prefix = '[SUCCESS]';
+            else if (type === 'error') prefix = '[ERROR]';
+            else if (type === 'warning') prefix = '[WARNING]';
+            else if (type === 'speaking') prefix = '[BOT]';
+            else if (type === 'user') prefix = '[USER]';
+            
+            logEntry.innerHTML = `<span class="log-time">[${time}]</span><span>${prefix} ${message}</span>`;
+            
+            logsBox.appendChild(logEntry);
+            logsBox.scrollTop = logsBox.scrollHeight;
+        }
+
+        function clearLogs() {
+            const logsBox = document.getElementById('logsBox');
+            logsBox.innerHTML = '';
+            addLog('Logs cleared', 'info');
+        }
+
+        function updateStatus(status) {
+            const badge = document.getElementById('statusBadge');
+            badge.className = 'status-badge status-' + status;
+            
+            if (status === 'idle') {
+                badge.textContent = 'IDLE';
+            } else if (status === 'running') {
+                badge.textContent = 'RUNNING';
+            } else if (status === 'error') {
+                badge.textContent = 'ERROR';
+            }
+        }
+
+        function updateUptime() {
+            if (!startTime) return;
+            
+            const now = Date.now();
+            const diff = now - startTime;
+            
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            
+            document.getElementById('uptime').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function connectWebSocket() {
+            ws = new WebSocket('ws://localhost:8765');
+            
+            ws.onopen = () => {
+                addLog('Connected to bot server', 'success');
+            };
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'log') {
+                    addLog(data.message, data.level);
+                } else if (data.type === 'status') {
+                    updateStatus(data.status);
+                } else if (data.type === 'message_sent') {
+                    messagesCount++;
+                    document.getElementById('messagesCount').textContent = messagesCount;
+                } else if (data.type === 'user_message') {
+                    userMessagesCount++;
+                    document.getElementById('userMessages').textContent = userMessagesCount;
+                }
+            };
+            
+            ws.onerror = (error) => {
+                addLog('WebSocket connection error', 'error');
+            };
+            
+            ws.onclose = () => {
+                addLog('Disconnected from bot server. Reconnecting...', 'warning');
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        function startBot() {
+            const meetLink = document.getElementById('meetLink').value.trim();
+            
+            if (!meetLink || !meetLink.includes('meet.google.com')) {
+                addLog('Please enter a valid Google Meet link', 'error');
+                return;
+            }
+            
+            addLog('Starting bot...', 'info');
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    action: 'start',
+                    url: meetLink
+                }));
+                
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('meetLink').disabled = true;
+                
+                updateStatus('running');
+                startTime = Date.now();
+                uptimeInterval = setInterval(updateUptime, 1000);
+            } else {
+                addLog('Not connected to bot server. Reconnecting...', 'error');
+                connectWebSocket();
+            }
+        }
+
+        function stopBot() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    action: 'stop'
+                }));
+                
+                addLog('Stopping bot...', 'warning');
+                
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('meetLink').disabled = false;
+                
+                updateStatus('idle');
+                clearInterval(uptimeInterval);
+                startTime = null;
+                document.getElementById('uptime').textContent = '00:00:00';
+            }
+        }
+
+        // Connect on load
+        window.addEventListener('load', () => {
+            addLog('Connecting to bot server...', 'info');
+            connectWebSocket();
+        });
+    </script>
+</body>
+</html>

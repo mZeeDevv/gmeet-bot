@@ -3,3 +3,7 @@ flask-cors==6.0.0
 python-dotenv==1.0.0
 Werkzeug==3.0.1
 gunicorn==21.2.0
+google-generativeai
+sentence-transformers>=2.2.2
+qdrant-client>=1.6.4
+requests>=2.31.0
