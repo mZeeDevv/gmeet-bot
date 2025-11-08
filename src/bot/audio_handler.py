@@ -10,6 +10,7 @@ from pathlib import Path
 import tempfile
 import time
 import pygame
+import re
 
 
 class AudioHandler:
@@ -21,6 +22,33 @@ class AudioHandler:
         self.bot_speaking = False
         self.interrupt_speaking = False
         self._detect_virtual_devices()
+    
+    def _clean_text_for_speech(self, text):
+        """Remove markdown formatting and special characters for better TTS"""
+        # Remove bold/italic markers (**, *, _)
+        text = re.sub(r'\*\*\*', '', text)  # Remove triple asterisks
+        text = re.sub(r'\*\*', '', text)    # Remove bold markers
+        text = re.sub(r'\*', '', text)      # Remove single asterisks
+        text = re.sub(r'_', '', text)       # Remove underscores
+        
+        # Remove markdown links [text](url) -> keep only text
+        text = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', text)
+        
+        # Remove markdown headers (#, ##, ###, etc)
+        text = re.sub(r'^#+\s*', '', text, flags=re.MULTILINE)
+        
+        # Remove code blocks and inline code (`, ```, ~~~)
+        text = re.sub(r'```[^`]*```', '', text)
+        text = re.sub(r'`([^`]+)`', r'\1', text)
+        
+        # Remove special markdown characters
+        text = re.sub(r'[~`>]', '', text)
+        
+        # Clean up multiple spaces and newlines
+        text = re.sub(r'\s+', ' ', text)
+        text = text.strip()
+        
+        return text
     
     def _detect_virtual_devices(self):
         """Detect VB-Audio Virtual Cable devices"""
@@ -45,7 +73,10 @@ class AudioHandler:
         try:
             self.bot_speaking = True
             self.interrupt_speaking = False
-            print(f"Bot speaking: {text}")
+            
+            # Clean text for better TTS pronunciation
+            clean_text = self._clean_text_for_speech(text)
+            print(f"Bot speaking: {clean_text}")
             
             if not self.virtual_speaker:
                 print("  Virtual Audio Cable not detected! Audio may not work.")
@@ -55,12 +86,11 @@ class AudioHandler:
             temp_dir.mkdir(exist_ok=True)
             audio_file = temp_dir / f"speech_{int(time.time())}.mp3"
             
-            tts = gTTS(text=text, lang='en', slow=False)
+            tts = gTTS(text=clean_text, lang='en', slow=False)
             tts.save(str(audio_file))
             
             device_info = sd.query_devices(self.virtual_speaker)
             supported_rate = int(device_info['default_samplerate'])
-            print(f"  Loading audio and converting to {supported_rate}Hz...")
             
             try:
                 audio = AudioSegment.from_mp3(str(audio_file))
@@ -70,7 +100,6 @@ class AudioHandler:
                 audio.export(str(wav_file), format='wav')
                 data, samplerate = sf.read(str(wav_file))
             except Exception as conv_error:
-                print(f"  FFmpeg not available, using alternative method...")
                 import pygame
                 pygame.mixer.init(frequency=supported_rate, size=-16, channels=2)
                 sound = pygame.mixer.Sound(str(audio_file))
@@ -79,12 +108,10 @@ class AudioHandler:
                 samplerate = supported_rate
                 pygame.mixer.quit()
             
-            print(f"  Playing to Virtual Speaker at {samplerate}Hz...")
             sd.play(data, samplerate, device=self.virtual_speaker)
             
             while sd.get_stream().active:
                 if self.interrupt_speaking:
-                    print("  Stopping due to user interruption")
                     sd.stop()
                     break
                 time.sleep(0.1)
@@ -97,7 +124,6 @@ class AudioHandler:
                 pass
             
             time.sleep(1)
-            print("  Audio sent through Virtual Cable to Meeting")
             
         except Exception as e:
             print(f"  Speech error: {str(e)}")

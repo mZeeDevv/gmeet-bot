@@ -27,8 +27,14 @@ You can answer any general questions about various topics."""
                 return
             
             genai.configure(api_key=api_key)
-            self.gemini_model = genai.GenerativeModel('gemini-2.5-pro')
-            print("Gemini AI initialized successfully")
+            
+            # PERFORMANCE: Use fastest model for quickest responses
+            # gemini-2.5-flash-lite: FASTEST (1-2 sec) - Best for real-time chat
+            # gemini-2.5-flash: Fast (2-3 sec) - Good balance
+            # gemini-2.5-pro: Slower (4-5 sec) - Highest quality
+            model_name = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash-lite')
+            
+            self.gemini_model = genai.GenerativeModel(model_name)
         except Exception as e:
             print(f"Error initializing Gemini: {str(e)}")
             self.gemini_model = None
@@ -47,24 +53,25 @@ You can answer any general questions about various topics."""
             context = ""
             
             if self.vector_searcher and self.vector_searcher.is_available():
-                print("Searching documentation...")
-                results, citations = self.vector_searcher.search_docs(user_question, limit=3)
+                # Reduced from 3 to 2 results for faster processing
+                results, citations = self.vector_searcher.search_docs(user_question, limit=2)
                 
                 if results:
                     context = self.vector_searcher.format_context_for_ai(results)
-                    print(f"Found {len(results)} relevant documents")
+                    
+                    # PERFORMANCE: Truncate context to reduce AI processing time
+                    if len(context) > 1500:
+                        context = context[:1500] + "...(truncated for speed)"
             
             if context:
+                # Shorter, more focused prompt for faster response
                 prompt = f"""You are an AI assistant for Fastn.ai in a Google Meet call.
-Use the following documentation to answer the user's question accurately.
-Keep your response concise (2-3 sentences) and speak naturally as if in a conversation.
+Answer concisely (2-3 sentences) using this documentation:
 
-Documentation Context:
 {context}
 
-User question: {user_question}
-
-Provide a clear, concise answer based on the documentation:"""
+Question: {user_question}
+Answer:"""
             else:
                 prompt = f"""{self.system_context}
 

@@ -1,122 +1,46 @@
-from flask import Flask, request, jsonify, send_from_directory, render_template
-from flask_cors import CORS
+# ================================================================
+# Google Meet Bot - Main Entry Point
+# ================================================================
+# This file starts the dashboard server and opens the control panel
+# ================================================================
+
+import webbrowser
+import time
 import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
-import logging
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+print("\n" + "="*70)
+print("GOOGLE MEET BOT - DASHBOARD")
+print("="*70)
 
-try:
-    # Load environment variables
-    load_dotenv()
+# Add current directory to path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
-    # Add the parent directory to the Python path to import vector_store
-    current_dir = Path(__file__).parent
-    sys.path.append(str(current_dir))
-    
-    # Import search functionality
-    from vector_store.search_docs import search_docs, generate_answer
+print("\nStarting dashboard server...")
+print("Please wait...")
 
-    app = Flask(__name__, 
-                template_folder=os.path.join(current_dir, 'templates'),
-                static_folder=os.path.join(current_dir, 'static'))
-    CORS(app)
+# Get dashboard HTML path
+dashboard_path = Path(__file__).parent / "dashboard" / "dashboard.html"
+dashboard_url = f"file:///{dashboard_path.as_posix()}"
 
-    # Favicon route
-    @app.route('/favicon.ico')
-    def favicon():
-        return '', 204  # No content response for favicon
+print(f"\nDashboard: {dashboard_url}")
+print("\nOpening dashboard in browser...")
 
-    @app.route('/')
-    def home():
-        logger.info("Serving search template")
-        return render_template('search.html')
+time.sleep(1)
+webbrowser.open(dashboard_url)
 
-    @app.route('/search', methods=['POST'])
-    def search():
-        data = request.get_json()
-        query = data.get('query')
-        
-        if not query:
-            return jsonify({'error': 'Query is required'}), 400
+print("\n" + "="*70)
+print("DASHBOARD SERVER RUNNING")
+print("="*70)
+print("\nDashboard opened in your browser")
+print("WebSocket server running on ws://localhost:8765")
+print("\nKeep this terminal running!")
+print("Press Ctrl+C to stop the server")
+print("\n" + "="*70 + "\n")
 
-        try:
-            # Get search results from vector store
-            search_results = search_docs(query)
-            
-            if not search_results:
-                return jsonify({
-                    'answer': 'No relevant information found in the documentation.',
-                    'sources': []
-                })
-
-            # Generate answer using Gemini
-            answer = generate_answer(query, search_results)
-
-            # Return both the answer and the sources
-            return jsonify({
-                'answer': answer,
-                'sources': search_results  # This includes URLs and other metadata
-            })
-
-        except Exception as e:
-            logger.error(f"Error during search: {str(e)}")
-            return jsonify({'error': str(e)}), 500
-
-    @app.errorhandler(500)
-    def server_error(e):
-        logger.error(f"Server error: {str(e)}")
-        return jsonify({
-            "error": "Internal server error",
-            "message": str(e)
-        }), 500
-
-    @app.errorhandler(404)
-    def not_found(e):
-        logger.error(f"Not found: {str(e)}")
-        return jsonify({
-            "error": "Not found",
-            "message": str(e)
-        }), 404
-
-except Exception as e:
-    logger.error(f"Error during app initialization: {str(e)}")
-    raise
-
-@app.route('/search', methods=['POST'])
-def search():
-    data = request.get_json()
-    query = data.get('query')
-    
-    if not query:
-        return jsonify({'error': 'Query is required'}), 400
-
-    try:
-        # Get search results from vector store
-        search_results = search_docs(query)
-        
-        if not search_results:
-            return jsonify({
-                'answer': 'No relevant information found in the documentation.',
-                'sources': []
-            })
-
-        # Generate answer using Gemini
-        answer = generate_answer(query, search_results)
-
-        # Return both the answer and the sources
-        return jsonify({
-            'answer': answer,
-            'sources': search_results  # This includes URLs and other metadata
-        })
-
-    except Exception as e:
-        print(f"Error during search: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+# Import and start dashboard server
+from dashboard.dashboard_server import dashboard
+dashboard.start()

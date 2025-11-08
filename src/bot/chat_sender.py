@@ -41,7 +41,7 @@ class MeetChatSender:
                         )
                     
                     chat_button.click()
-                    print("💬 Chat panel opened")
+                    print("Chat panel opened")
                     time.sleep(1)
                     self.chat_opened = True
                     return True
@@ -49,11 +49,10 @@ class MeetChatSender:
                 except Exception:
                     continue
             
-            print("⚠️  Could not find chat button")
             return False
             
         except Exception as e:
-            print(f"❌ Error opening chat: {str(e)}")
+            print(f"Error opening chat: {str(e)}")
             return False
     
     def send_message(self, message: str) -> bool:
@@ -88,7 +87,6 @@ class MeetChatSender:
                     continue
             
             if not chat_input:
-                print("⚠️  Could not find chat input box")
                 return False
             
             safe_message = self._sanitize_message(message)
@@ -101,11 +99,10 @@ class MeetChatSender:
             chat_input.send_keys(Keys.CONTROL + Keys.RETURN)
             time.sleep(0.5)
             
-            print(f"Chat message sent: {safe_message[:50]}...")
             return True
             
         except Exception as e:
-            print(f"❌ Error sending chat message: {str(e)}")
+            print(f"Error sending chat message: {str(e)}")
             return False
     
     def send_citations(self, citations: list) -> bool:
@@ -118,7 +115,7 @@ class MeetChatSender:
             return self.send_message(citations_text)
             
         except Exception as e:
-            print(f"❌ Error sending citations: {str(e)}")
+            print(f"Error sending citations: {str(e)}")
             return False
     
     def close_chat(self):
@@ -132,7 +129,6 @@ class MeetChatSender:
             )
             chat_button.click()
             self.chat_opened = False
-            print("💬 Chat panel closed")
             
         except Exception as e:
-            print(f"⚠️  Could not close chat: {str(e)}")
+            print(f"Could not close chat: {str(e)}")

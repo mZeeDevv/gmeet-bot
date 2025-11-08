@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 import os
+from bot.script_loader import get_script_loader
 
 
 class MeetController:
@@ -15,6 +16,7 @@ class MeetController:
     def __init__(self, profile_dir):
         self.driver = None
         self.profile_dir = profile_dir
+        self.script_loader = get_script_loader()
     
     @staticmethod
     def get_profile_dir():
@@ -46,7 +48,10 @@ class MeetController:
         print("Opening Edge with saved profile...")
         self.driver = webdriver.Edge(options=edge_options)
         self.driver.maximize_window()
-        self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        
+        # Disable webdriver detection
+        script = self.script_loader.load('disable_webdriver_detection')
+        self.driver.execute_script(script)
     
     def check_login(self):
         """Check if user is logged into Google"""
@@ -74,38 +79,75 @@ class MeetController:
         time.sleep(2)
         
         print("Joining...")
-        self.click_join_button()
+        is_in_lobby = self.click_join_button()
         
-        print("Waiting for join...")
-        WebDriverWait(self.driver, 60).until(
-            EC.presence_of_element_located((By.XPATH, "//button[contains(@aria-label, 'Leave call')]"))
-        )
-        print("\nSuccessfully joined!")
+        if is_in_lobby:
+            print("\nWaiting in lobby for host to admit...")
+            print("Bot will start once admitted to the meeting")
+            # Wait longer for host to admit from lobby
+            WebDriverWait(self.driver, 300).until(  # 5 minutes timeout
+                EC.presence_of_element_located((By.XPATH, "//button[contains(@aria-label, 'Leave call')]"))
+            )
+            print("Admitted to meeting!")
+        else:
+            print("Waiting for join confirmation...")
+            WebDriverWait(self.driver, 60).until(
+                EC.presence_of_element_located((By.XPATH, "//button[contains(@aria-label, 'Leave call')]"))
+            )
+        
+        # Extra check: Make sure we're actually in the meeting, not in lobby
+        time.sleep(2)
+        if "waiting for" in self.driver.page_source.lower() or "lobby" in self.driver.page_source.lower():
+            print("\nStill in lobby, waiting for admission...")
+            time.sleep(5)  # Give extra time
+        
+        print("\nSuccessfully joined the meeting!")
+        return True
     
     def disable_camera(self):
         """Turn off camera only (keep mic on for bot to speak)"""
         try:
-            time.sleep(2)
-            cameras = self.driver.find_elements(By.XPATH, "//button[contains(@aria-label, 'camera') or contains(@aria-label, 'Camera')]")
+            time.sleep(3)  # Wait for UI to load
             
-            for btn in cameras:
+            # Try multiple XPath selectors for camera button
+            camera_selectors = [
+                "//button[contains(@aria-label, 'Turn off camera')]",
+                "//button[contains(@aria-label, 'camera') and contains(@aria-label, 'on')]",
+                "//button[@aria-label[contains(., 'camera')]]",
+                "//div[@role='button' and contains(@aria-label, 'camera')]",
+                "//button[contains(@data-tooltip, 'camera')]"
+            ]
+            
+            camera_found = False
+            for selector in camera_selectors:
                 try:
-                    label = btn.get_attribute('aria-label')
-                    if label:
+                    cameras = self.driver.find_elements(By.XPATH, selector)
+                    for btn in cameras:
+                        label = btn.get_attribute('aria-label') or ''
                         print(f"  Camera button found: {label}")
-                        if 'Turn off' in label or 'camera on' in label.lower():
+                        
+                        # Check if camera is ON and needs to be turned OFF
+                        if 'Turn off' in label or ('camera' in label.lower() and 'off' not in label.lower()):
                             btn.click()
                             print("  Camera turned OFF")
                             time.sleep(1)
-                            break
-                        elif 'Turn on' in label or 'camera off' in label.lower():
+                            camera_found = True
+                            return
+                        elif 'Turn on' in label or 'off' in label.lower():
                             print("  Camera already OFF")
-                            break
+                            camera_found = True
+                            return
                 except Exception as e:
-                    print(f"  Error checking camera: {e}")
                     continue
+            
+            if not camera_found:
+                print("  Camera button not found, trying JavaScript...")
+                # Fallback: Use JavaScript to find and click camera button
+                result = self.script_loader.execute(self.driver, 'disable_camera')
+                print(f"  {result}")
+                
         except Exception as e:
-            print(f"  Camera config: {str(e)}")
+            print(f"  Camera config error: {str(e)}")
     
     def click_join_button(self):
         """Click join button or auto-join if already in"""
@@ -118,13 +160,22 @@ class MeetController:
             ]
             
             joined = False
+            is_asking_to_join = False
+            
             for selector in selectors:
                 try:
                     button = WebDriverWait(self.driver, 3).until(
                         EC.element_to_be_clickable((By.XPATH, selector))
                     )
+                    button_text = button.text
                     button.click()
-                    print("  Clicked join button")
+                    
+                    if 'Ask to join' in button_text:
+                        print("  Clicked 'Ask to join' - waiting in lobby")
+                        is_asking_to_join = True
+                    else:
+                        print("  Clicked 'Join now'")
+                    
                     joined = True
                     break
                 except:
@@ -132,49 +183,20 @@ class MeetController:
             
             if not joined:
                 print("  No join button (may already be in meeting)")
+            
+            return is_asking_to_join
+            
         except Exception as e:
             print(f"  Join: {str(e)}")
+            return False
     
     def set_virtual_microphone(self):
         """Set browser to use VB-Cable Output (Virtual Microphone) BEFORE joining"""
         try:
             print("Configuring virtual audio devices...")
             
-            script = """
-            (async function() {
-                try {
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    const audioInputs = devices.filter(d => d.kind === 'audioinput');
-                    console.log('Available audio inputs:', audioInputs.map(d => d.label));
-                    
-                    const virtualMic = audioInputs.find(d => 
-                        d.label.toLowerCase().includes('cable output') ||
-                        d.label.toLowerCase().includes('vb-audio virtual cable')
-                    );
-                    
-                    if (virtualMic) {
-                        window.virtualMicId = virtualMic.deviceId;
-                        const stream = await navigator.mediaDevices.getUserMedia({
-                            audio: { 
-                                deviceId: { exact: virtualMic.deviceId },
-                                echoCancellation: false,
-                                noiseSuppression: false,
-                                autoGainControl: false
-                            }
-                        });
-                        window.virtualMicStream = stream;
-                        console.log('Virtual Microphone activated:', virtualMic.label);
-                        return 'success: ' + virtualMic.label;
-                    } else {
-                        return 'error: Virtual microphone not found. Available: ' + audioInputs.map(d => d.label).join(', ');
-                    }
-                } catch(e) {
-                    return 'error: ' + e.message;
-                }
-            })();
-            """
-            
-            result = self.driver.execute_script(script)
+            # Load and execute the setup script
+            result = self.script_loader.execute(self.driver, 'setup_virtual_microphone')
             
             if 'success' in str(result):
                 print(f"  Virtual Microphone activated: {result.split(': ')[1]}")
@@ -222,29 +244,8 @@ class MeetController:
         try:
             print("Injecting Virtual Microphone stream into meeting...")
             
-            script = """
-            (async function() {
-                try {
-                    if (!window.virtualMicStream) {
-                        return 'error: Virtual mic stream not found';
-                    }
-                    
-                    const stream = window.virtualMicStream;
-                    const audioTrack = stream.getAudioTracks()[0];
-                    
-                    if (audioTrack) {
-                        console.log('Injecting virtual mic track:', audioTrack.label);
-                        return 'success: Audio track injected - ' + audioTrack.label;
-                    } else {
-                        return 'error: No audio track found';
-                    }
-                } catch(e) {
-                    return 'error: ' + e.message;
-                }
-            })();
-            """
-            
-            result = self.driver.execute_script(script)
+            # Load and execute the injection script
+            result = self.script_loader.execute(self.driver, 'inject_virtual_mic_stream')
             
             if 'success' in str(result):
                 print(f"  {result}")
