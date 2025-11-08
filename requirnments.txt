@@ -1,0 +1,28 @@
+
+# AI/LLM for generating responses
+google-generativeai>=0.3.0
+
+# Browser automation for Google Meet
+selenium>=4.15.0
+
+# Speech recognition and text-to-speech
+SpeechRecognition>=3.10.0
+PyAudio>=0.2.13
+gTTS>=2.4.0
+
+# Audio processing and playback
+sounddevice>=0.4.6
+soundfile>=0.12.1
+pydub>=0.25.1
+pygame>=2.5.2
+numpy>=1.26.2
+
+# Web scraping for docs crawler
+requests>=2.31.0
+beautifulsoup4>=4.12.2
+
+# Dashboard WebSocket communication
+websockets>=12.0
+
+# Environment variables
+python-dotenv>=1.0.0
