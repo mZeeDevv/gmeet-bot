@@ -2,6 +2,8 @@
 
 An intelligent AI-powered bot that joins Google Meet sessions, listens to questions using wake word detection, and provides instant answers from FASTN documentation using Google Gemini AI.
 
+<img width="1439" height="687" alt="WorkFlow" src="https://github.com/user-attachments/assets/38cf6a4f-c9a7-48d1-be7b-01007cacd7ed" />
+
 ## Features
 
 - **Wake Word Detection**: Responds when you say "okay assistant" or "ok assistant"
@@ -11,6 +13,10 @@ An intelligent AI-powered bot that joins Google Meet sessions, listens to questi
 - **Real-time Dashboard**: Monitor bot activity and conversation history
 - **Lobby Detection**: Automatically waits for host admission before joining
 - **Auto Camera Off**: Automatically disables camera when joining meetings
+
+
+## Demo
+https://www.youtube.com/watch?v=Y6A8-GBFpLc
 
 ## Prerequisites
 
@@ -123,6 +129,8 @@ fastn-bot/
 ├── .env.example                         # Environment variables template
 └── README.md
 ```
+## Audio Workflows
+<img width="1439" height="687" alt="WorkFlow (1)" src="https://github.com/user-attachments/assets/88328d17-6912-490f-9dd8-aad83e8e55a3" />
 
 ## How to Use
 
